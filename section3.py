@@ -1,4 +1,3 @@
-
 from common import *
 
 ##############################################################################
@@ -113,7 +112,7 @@ print(f'p {p}')
 print(f't {t}')
 
 # P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
-ps = evaluate_encrypted(p, s_encs, prime)
+ps = evaluateEncrypted(p, s_encs, prime)
 print('E(p(s))', ps)
 
 # P calculates p(x)/t(x). This is g^h.
@@ -121,7 +120,7 @@ h = sp.simplify(p/t)
 print('h', h)
 
 # E(h(x)) = g^h
-hs = evaluate_encrypted(h, s_encs, prime)
+hs = evaluateEncrypted(h, s_encs, prime)
 print('E(h(s))', hs)
 
 # P sends g^p and g^h back to V.

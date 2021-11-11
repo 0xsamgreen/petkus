@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sympy as sp
 
 
-def evaluate_encrypted(poly, input_encrypted, prime):
+def evaluateEncrypted(poly, input_encrypted, prime):
     '''Homomorphically evaluates a monomial.
 
     Args:
