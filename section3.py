@@ -1,4 +1,5 @@
 from common import *
+import numpy as np
 
 ##############################################################################
 # Example 3.1
@@ -129,3 +130,36 @@ print('E(h(s))', hs)
 ts = int(t.evalf(subs={x:s}))
 assert hs**ts % prime == ps
 print('Verification passed')
+
+
+##############################################################################
+# Example 3.4
+##############################################################################
+
+# 3.4.a - Alice
+
+#import bplib as bp
+#from bplib import *
+#G = bp.BpGroup()
+
+# Choosing an arbitray a
+a = 42
+n = 2**11-1
+
+alpha = np.random.randint(2,n)
+a_prime = a**alpha % n 
+
+# Send (a, a') to Bob
+
+# 3.4.b - Bob
+
+c = 11
+
+b = a**c % n
+b_prime = a_prime**c % n
+
+# Send (b, b') to Alice
+
+# 3.4.c - Alice
+
+assert b**alpha % n == b_prime, f"b**alpha {b**alpha} != b_prime {b_prime}"
