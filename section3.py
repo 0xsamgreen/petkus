@@ -87,12 +87,14 @@ p_prime_r = t_r * h_prime_r
 
 # 3.3.a 
 
+from sympy.ntheory.residue_ntheory import primitive_root
+
 # Select field size by hand. This is public.
-prime = 17
+prime = 2**7 - 1
 print('Using prime', prime)
 
-# Select a random base in the field. This is public.
-g = np.random.randint(2, prime)
+# Select the smallest primitive root of GF(prime). This is public.
+g = primitive_root(prime)
 print('Using base g', g)
 
 # Select secret
@@ -113,8 +115,8 @@ print(f'p {p}')
 print(f't {t}')
 
 # P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
-ps = evaluateEncrypted(p, s_encs, prime)
-print('E(p(s))', ps)
+gp = evaluateEncrypted(p, s_encs, prime)
+print('E(p(s)) = g^p', gp)
 
 # P calculates p(x)/t(x). This is g^h.
 h = sp.simplify(p/t)
@@ -128,7 +130,7 @@ print('E(h(s))', hs)
 
 # 3.3.c. V checks that (g^h)^t(s) = g^p.
 ts = int(t.evalf(subs={x:s}))
-assert hs**ts % prime == ps
+assert hs**ts % prime == gp
 print('Verification passed')
 
 
@@ -142,9 +144,9 @@ print('Verification passed')
 #from bplib import *
 #G = bp.BpGroup()
 
-# Choosing an arbitray a
-a = 42
-n = 2**11-1
+n = 2**13-1
+a = primitive_root(n)
+print('a', a)
 
 alpha = np.random.randint(2,n)
 a_prime = a**alpha % n 
@@ -163,3 +165,31 @@ b_prime = a_prime**c % n
 # 3.4.c - Alice
 
 assert b**alpha % n == b_prime, f"b**alpha {b**alpha} != b_prime {b_prime}"
+
+
+##############################################################################
+# Example 3.5
+# 
+# Note: builds on results from Example 3.3.
+##############################################################################
+
+# 3.5.1 - Verifier
+
+# Select secret shift parameter
+alpha = np.random.randint(2,prime)
+
+# V calculates E(alpha*s^0), E(alpha*s^1), ..., E(alpha*s^p_deg) and gives them to P.
+s_shift_encs = [pow(s_encs[i], alpha, prime) for i in range(len(s_encs))]
+print('s_shift_encs', s_shift_encs)
+
+# Send E(s), E(s^2), ..., E(s^d) and E(alpha*s), E(alpha*s^2), ..., E(alpha*s^d) to Prover.
+
+# 3.5.2 - Prover
+
+# P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
+gpprime = evaluateEncrypted(p, s_shift_encs, prime)
+print('E(alpha*p(s))', gpprime)
+
+# 3.5.3 - Verifier
+
+assert gp**alpha % prime == gpprime
