@@ -98,7 +98,6 @@ g = primitive_root(prime)
 print('Using base g', g)
 
 # Select secret
-# using a smaller s for testing
 s = np.random.randint(2, prime)
 print('Selecting secret s', s)
 
@@ -139,10 +138,6 @@ print('Verification passed')
 ##############################################################################
 
 # 3.4.a - Alice
-
-#import bplib as bp
-#from bplib import *
-#G = bp.BpGroup()
 
 n = 2**13-1
 a = primitive_root(n)
@@ -193,3 +188,29 @@ print('E(alpha*p(s))', gpprime)
 # 3.5.3 - Verifier
 
 assert gp**alpha % prime == gpprime
+
+##############################################################################
+# Example 3.6
+# 
+# Note: builds on results from Example 3.5.
+##############################################################################
+
+# CRS proving key is:
+#   g^s^i = `s_encs`
+#   g^(as^i) = `s_shift_encs`
+
+# CRS verification key is:
+# g^t(s) - We don't have this yet. We only created t(r) = `t_r` in Example
+#   3.1. The verifier uses public t(x) and the secret s to making g^t(s) = `ts_enc`:
+ts_enc = pow(g,ts,prime)
+# g^alpha - Must create this now
+alpha_enc = pow(g,alpha,prime)
+
+# Verifier
+#   Check that p=t*h 
+
+import bplib as bp
+from bplib import *
+G = bp.BpGroup()
+
+g1, g2 = G.gen1(), G.gen2()
