@@ -203,15 +203,14 @@ p_coeffs = [1, -3, 2, 0]
 
 # Create a set of bilinear EC groups
 G = bp.BpGroup()
-
-# Compute pairing
 g1 = G.gen1()
 g2 = G.gen2()
 
-# CRS proving key:
+# P creates the CRS proving key and sends to V
 #   g^(s^i) = `s_encs`
 s_encs = [g1 * (s ** i) for i in range(len(p_coeffs))]
 #   g^(as^i) = `s_shift_encs`
+s_shift_encs = [g1 * (alpha * s ** i) for i in range(len(p_coeffs))]
 
 # P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
 gp = (
@@ -220,12 +219,13 @@ gp = (
     + g1 * (s ** 1) * p_coeffs[2]
 )
 
-t1 = G.pair(gp, g2)
-
-
-gt = g1 * ts
+# P evaluates g^h(s)
 gh = g2 * int(h.evalf(subs={x: s}))
 
-t2 = G.pair(gt, gh)
+# P sends g^p and g^h to V
 
-t1 == t2
+# V evaluates g^t(s)
+gt = g1 * ts
+
+# V checks that e(g^p, g^1) == e(g^t, g^h)
+G.pair(gp, g2) == G.pair(gt, gh)
