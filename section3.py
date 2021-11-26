@@ -78,8 +78,6 @@ h_prime_r = np.random.randint(10)
 p_prime_r = t_r * h_prime_r
 
 # Looking back to Example 3.1, we see this will pass.
-# Looking back to Example 3.1, we see this will pass.
-
 
 ##############################################################################
 # Example 3.3
@@ -193,39 +191,128 @@ assert gp ** alpha % prime == gpprime
 # Example 3.6
 #
 # Note: Now that we are using bilinear maps, we are creating new variables and
-#   redefining `g`.
+#   redefining `g`. In fact, the g used in the whitepaper is an acceptable
+#   abuse of notation to keep things simple for the reader.
 ##############################################################################
 
 import bplib as bp
 from bplib import *
 
-p_coeffs = [1, -3, 2, 0]
+# Known to Prover
+# p(x) = 0 + 2x - 3x^2 + x^3
+p_coeffs = [0, 2, -3, 1]
+# h(x) = x
+h_coeffs = [0, 1]
+
+# The commitment which is public
+# t(x) = 2 - 3x + x^2
+t_coeffs = [2, -3, 1]
+
+# Notice that h(x)*t(x) = p(x)
 
 # Create a set of bilinear EC groups
 G = bp.BpGroup()
 g1 = G.gen1()
 g2 = G.gen2()
 
-# P creates the CRS proving key and sends to V
+# Verifier selects random s and alpha
+s = np.random.randint(100)
+alpha = np.random.randint(100)
+
+# Verifier creates the CRS proving key and sends to Prover
 #   g^(s^i) = `s_encs`
-s_encs = [g1 * (s ** i) for i in range(len(p_coeffs))]
+s_encs1 = [g1 * (s ** i) for i in range(len(p_coeffs))]
+s_encs2 = [g2 * (s ** i) for i in range(len(p_coeffs))]
 #   g^(as^i) = `s_shift_encs`
-s_shift_encs = [g1 * (alpha * s ** i) for i in range(len(p_coeffs))]
+s_shift_encs1 = [g1 * (alpha * s ** i) for i in range(len(p_coeffs))]
+s_shift_encs2 = [g2 * (alpha * s ** i) for i in range(len(p_coeffs))]
 
-# P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
-gp = (
-    g1 * (s ** 3) * p_coeffs[0]
-    + g1 * (s ** 2) * p_coeffs[1]
-    + g1 * (s ** 1) * p_coeffs[2]
-)
 
-# P evaluates g^h(s)
-gh = g2 * int(h.evalf(subs={x: s}))
+def evaluate(s, coeffs):
+    """Evaluates a polynomial on encrypted inputs
 
-# P sends g^p and g^h to V
+    Args:
+    s - List of encrypted inputs.
+    coeffs - List of coefficients in increasing order.
+    """
+    result = s[0] * coeffs[0]
+    for i in range(1, len(coeffs)):
+        result += s[i] * coeffs[i]
 
-# V evaluates g^t(s)
-gt = g1 * ts
+    return result
 
-# V checks that e(g^p, g^1) == e(g^t, g^h)
+
+# Prover evaluates the polynomial in the ciphertext domain. This is E(p(s)) = g^p.
+gp = evaluate(s_encs1, p_coeffs)
+
+# Prover evaluates g^h in ciphertext domain.
+gh = evaluate(s_encs2, h_coeffs)
+
+# Prover sends g^p and g^h to Verifier
+
+# Verifier evaluates g^t(s)
+gt = evaluate(s_encs1, t_coeffs)
+
+# Verifier checks that e(g^p, g^1) == e(g^t, g^h)
+G.pair(gp, g2) == G.pair(gt, gh)
+
+##############################################################################
+# Example 3.7 zk-SNARKOP protocol
+##############################################################################
+
+# Verifier setup
+
+# The commitment which is public
+# t(x) = 2 - 3x + x^2
+t_coeffs = [2, -3, 1]
+
+# Sample random values
+s = np.random.randint(100)
+alpha = np.random.randint(100)
+
+# Proving key
+s_encs1 = [g1 * (s ** i) for i in range(len(p_coeffs))]
+s_encs2 = [g2 * (s ** i) for i in range(len(p_coeffs))]
+s_shift_encs1 = [g1 * (alpha * s ** i) for i in range(len(p_coeffs))]
+s_shift_encs2 = [g2 * (alpha * s ** i) for i in range(len(p_coeffs))]
+
+# Verification key
+g_alpha = g2 * alpha
+gt = evaluate(s_encs1, t_coeffs)
+
+# Proof
+
+# Assign coefficients
+# p(x) = 0 + 2x - 3x^2 + x^3
+p_coeffs = [0, 2, -3, 1]
+
+# Calculate h(x) = p(x)/t(x)
+# h(x) = x
+h_coeffs = [0, 1]
+
+# Evaluate g^p(s) and g^h(s) using encrypted powers of s
+gp = evaluate(s_encs1, p_coeffs)
+gh = evaluate(s_encs2, h_coeffs)
+
+# Evaluate encrypted shifted polynomial g^(alpha*p(s)) using encrypted shifted
+#   powers of s
+gp_shift = evaluate(s_shift_encs1, p_coeffs)
+
+# Sample random delta
+delta = np.random.randint(100)
+
+# Set randomized proof
+gdp = delta * gp
+gdh = delta * gh
+gdap = delta * gp_shift
+
+# Verification
+gp = gdp
+gh = gdh
+gp_prime = gdap
+
+# Check polynomial restriction
+G.pair(gp_prime, g2) == G.pair(gp, g_alpha)
+
+# Check polynomial cofactors
 G.pair(gp, g2) == G.pair(gt, gh)
