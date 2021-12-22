@@ -74,10 +74,31 @@ p_x = l_x * r_x - o_x
 #   commitment t(x).
 h_x = sp.Poly(sp.simplify(p_x / t_x))
 
-# Prover sends h(x) to Verifier.
+# Prover sends h(x) and p(x) to Verifier.
 
 # 5. Verifier checks that t(x)*h(x) = p(x)
 assert h_x * t_x == p_x, "Verification failed."
 
-# The whitepaper doesn't get into this, but the security of the above
-#   example is explained by the Schwartz–Zippel lemma.
+# Note: this not an example of a secure proof, but it will be made more complete
+#   in the sections ahead.
+
+
+##############################################################################
+# Example 4.2
+
+# Proving
+# l(x) * r(x) = o(x)
+# a    * b    = r1
+# a    * c    = r2
+##############################################################################
+
+# 1. Construct operand polynomial l(x)
+l_vec = [3, 3, 1]
+l_coeff = getCoefficients(l_vec)
+print(l_coeff)
+
+# 2. Sample random alpha and s
+alpha = np.random.randint(2, 2 ** 8)
+s = np.random.randint(2, 2 ** 8)
+
+# 3. Set the proving key
