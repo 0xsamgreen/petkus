@@ -2,7 +2,7 @@ from common import *
 import numpy as np
 
 ##############################################################################
-# Example 3.1
+# Section 3.1, pages 9 and 10
 ##############################################################################
 
 # Setup
@@ -14,7 +14,7 @@ p = x ** 3 - 3 * x ** 2 + 2 * x
 # The commitment which is public
 t = x ** 2 - 3 * x + 2
 
-# 3.1.a
+# V samples random number
 r = 23  # np.random.randint(1,10)
 print("r", r)
 
@@ -23,7 +23,7 @@ print("t(r)", t_r)
 
 # V sends r to P
 
-# 3.1.b
+# P calculates h(x)=p(x)/t(x)
 h = sp.simplify(p / t)
 print("h", h)
 
@@ -33,15 +33,15 @@ print(f"h({r}) {h_r}")
 p_r = p.evalf(subs={x: r})
 print(f"p({r}) {p_r}")
 
-# Prover sends h and p to Verifier
+# P sends h and p to VS
 
-# 3.1.c
+# P checks that p = t*h
 assert p_r == t_r * h_r, "Proof failed"
 print(f"Proof passed! {p_r} == {t_r*h_r}")
 
 
 ##############################################################################
-# Example 3.2
+# Section 3.1, page 10, see paragraph that starts with "On the contrary..."
 ##############################################################################
 
 # Prover
@@ -64,7 +64,7 @@ assert h_prime_r - int(h_prime_r) != 0, f"h'({r}) = {h_prime_r} is not an intege
 
 
 ##############################################################################
-# Remark 3.1
+# Remark 3.1, page 10. How to attack V
 ##############################################################################
 
 # Assume we are using the same commitment t(x) and challenge r. P then
@@ -80,10 +80,8 @@ p_prime_r = t_r * h_prime_r
 # Looking back to Example 3.1, we see this will pass.
 
 ##############################################################################
-# Example 3.3
+# Section 3.3.4, instantiating the protocol given on page 15
 ##############################################################################
-
-# 3.3.a
 
 from sympy.ntheory.residue_ntheory import primitive_root
 
@@ -106,8 +104,7 @@ p_coeffs = sp.Poly(p).all_coeffs()
 s_encs = [pow(g, s ** i, prime) for i in range(len(p_coeffs))]
 print("s_encs", s_encs)
 
-# 3.3.b
-# Using the same `p` and `t` as used in 3.1
+# Using the same `p` and `t` as used in the `Section 3.1` example code.
 print(f"p {p}")
 print(f"t {t}")
 
@@ -125,28 +122,32 @@ print("E(h(s))", hs)
 
 # P sends g^p and g^h back to V.
 
-# 3.3.c. V checks that (g^h)^t(s) = g^p.
+# V checks that (g^h)^t(s) = g^p.
 ts = int(t.evalf(subs={x: s}))
 assert hs ** ts % prime == gp
 print("Verification passed")
 
 
 ##############################################################################
-# Example 3.4
+# Section 3.4, instantiating KEA protocol, page 16
 ##############################################################################
 
-# 3.4.a - Alice
+# Alice setup
 
+# Public parameters
 n = 2 ** 13 - 1
 a = primitive_root(n)
 print("a", a)
 
+# Secret
 alpha = np.random.randint(2, n)
+
+# encrypt alpha
 a_prime = a ** alpha % n
 
-# Send (a, a') to Bob
+# Alice sends (a, a') to Bob
 
-# 3.4.b - Bob
+# Bob's steps
 
 c = 11
 
@@ -155,18 +156,18 @@ b_prime = a_prime ** c % n
 
 # Send (b, b') to Alice
 
-# 3.4.c - Alice
+# Alice checks Bob's work
 
 assert b ** alpha % n == b_prime, f"b**alpha {b**alpha} != b_prime {b_prime}"
 
 
 ##############################################################################
-# Example 3.5
+# Section 3.4, instantiating protocol started at the bottom of page 17
 #
-# Note: builds on results from Example 3.3.
+# Note: builds on results for `Section 3.3.4``
 ##############################################################################
 
-# 3.5.1 - Verifier
+# Verifier setup
 
 # Select secret shift parameter
 alpha = np.random.randint(2, prime)
@@ -177,22 +178,26 @@ print("s_shift_encs", s_shift_encs)
 
 # Send E(s), E(s^2), ..., E(s^d) and E(alpha*s), E(alpha*s^2), ..., E(alpha*s^d) to Prover.
 
-# 3.5.2 - Prover
+# Prover works
 
 # P evaluates the polynomial in the ct domain. This is E(p(s)) = g^p.
 gpprime = evaluateEncrypted(p, s_shift_encs, prime)
 print("E(alpha*p(s))", gpprime)
 
-# 3.5.3 - Verifier
+# Verifier checks
 
 assert gp ** alpha % prime == gpprime
 
 ##############################################################################
-# Example 3.6
+# Sections 3.5 and 3.6 Zero-Knowledge
 #
 # Note: Now that we are using bilinear maps, we are creating new variables and
 #   redefining `g`. In fact, the g used in the whitepaper is an acceptable
 #   abuse of notation to keep things simple for the reader.
+##############################################################################
+
+##############################################################################
+# 3.6.2 Trusted Party Setup, page 21
 ##############################################################################
 
 import bplib as bp
@@ -227,7 +232,6 @@ s_encs2 = [g2 * (s ** i) for i in range(len(p_coeffs))]
 s_shift_encs1 = [g1 * (alpha * s ** i) for i in range(len(p_coeffs))]
 s_shift_encs2 = [g2 * (alpha * s ** i) for i in range(len(p_coeffs))]
 
-
 def evaluate(s, coeffs):
     """Evaluates a polynomial on encrypted inputs
 
@@ -257,7 +261,7 @@ gt = evaluate(s_encs1, t_coeffs)
 G.pair(gp, g2) == G.pair(gt, gh)
 
 ##############################################################################
-# Example 3.7 zk-SNARKOP protocol
+# Section 3.7 zk-SNARKOP protocol, page 24
 ##############################################################################
 
 # Verifier setup

@@ -4,7 +4,8 @@ from common import *
 x = sp.symbols("x")
 
 ##############################################################################
-# Example 4.1
+# Section 4.5, General-Purpose ZK Proofs, example starting on page 31 and
+#   ending at the top of page 35
 ##############################################################################
 
 # 1. Verifier makes it publicly known that they would like a prover to take the
@@ -78,27 +79,3 @@ h_x = sp.Poly(sp.simplify(p_x / t_x))
 
 # 5. Verifier checks that t(x)*h(x) = p(x)
 assert h_x * t_x == p_x, "Verification failed."
-
-# Note: this not an example of a secure proof, but it will be made more complete
-#   in the sections ahead.
-
-
-##############################################################################
-# Example 4.2
-
-# Proving
-# l(x) * r(x) = o(x)
-# a    * b    = r1
-# a    * c    = r2
-##############################################################################
-
-# 1. Construct operand polynomial l(x)
-l_vec = [3, 3, 1]
-l_coeff = getCoefficients(l_vec)
-print(l_coeff)
-
-# 2. Sample random alpha and s
-alpha = np.random.randint(2, 2 ** 8)
-s = np.random.randint(2, 2 ** 8)
-
-# 3. Set the proving key
